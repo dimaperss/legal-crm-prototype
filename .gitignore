@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Netlify local state
+.netlify/
+
+# Env / secrets (никогда не коммитим токены)
+.env
+.env.*
+
+# Claude Code local settings
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

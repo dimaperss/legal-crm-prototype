@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Клиенты юриста — мини-CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --accent:        #2563eb;
+      --accent-dark:   #1e40af;
+      --accent-soft:   #eff6ff;
+      --accent-border: #bfdbfe;
+
+      --bg:      #f1f5f9;
+      --surface: #ffffff;
+      --text:    #0f172a;
+      --muted:   #64748b;
+      --border:  #e2e8f0;
+
+      --new-bg:      #dbeafe; --new-fg:      #1e40af;
+      --progress-bg: #fef3c7; --progress-fg: #92400e;
+      --closed-bg:   #dcfce7; --closed-fg:   #166534;
+
+      --danger:  #dc2626;
+      --success: #16a34a;
+
+      --radius:  14px;
+      --shadow:  0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .05);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    /* ---------- Шапка ---------- */
+    header.app-head { margin-bottom: 24px; }
+    .app-head h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0 0 4px;
+      letter-spacing: -.01em;
+    }
+    .app-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* ---------- Счётчики ---------- */
+    .counters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .counter {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: border-color .15s, box-shadow .15s, transform .05s;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .counter:hover { border-color: var(--accent-border); box-shadow: var(--shadow); }
+    .counter:active { transform: translateY(1px); }
+    .counter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .counter[aria-pressed="true"] {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .counter .num {
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .counter .lbl {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+    .dot.new      { background: var(--accent); }
+    .dot.progress { background: #f59e0b; }
+    .dot.closed   { background: var(--success); }
+
+    /* ---------- Карточки-панели ---------- */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card + .card { margin-top: 22px; }
+    .card-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-head .muted { color: var(--muted); font-weight: 400; font-size: 13px; }
+    .card-body { padding: 20px; }
+
+    /* ---------- Форма ---------- */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 180px auto;
+      gap: 14px;
+      align-items: start;
+    }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .field label .req { color: var(--danger); }
+    .field input,
+    .field select {
+      font: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      transition: border-color .15s, box-shadow .15s;
+      width: 100%;
+    }
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .field.invalid input,
+    .field.invalid select { border-color: var(--danger); }
+    .field .err {
+      font-size: 12px;
+      color: var(--danger);
+      min-height: 0;
+      display: none;
+    }
+    .field.invalid .err { display: block; }
+
+    .field.submit-field { justify-content: flex-end; }
+    .field.submit-field label { visibility: hidden; }
+
+    .btn {
+      font: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      transition: background .15s, opacity .15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: var(--accent-dark); }
+    .btn:active { transform: translateY(1px); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn.full { width: 100%; }
+
+    .btn-sm {
+      font-size: 13px;
+      padding: 7px 13px;
+      border-radius: 8px;
+    }
+    .btn-ghost {
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+    }
+    .btn-ghost:hover { background: var(--accent-border); }
+
+    .btn .spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.5);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: -2px;
+      margin-right: 7px;
+    }
+    .btn.loading .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---------- Таблица ---------- */
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead th {
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: var(--muted);
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background .12s; }
+    tbody tr:hover { background: #f8fafc; }
+    .cell-name { font-weight: 600; }
+    .cell-phone { color: var(--muted); white-space: nowrap; }
+    .cell-date { color: var(--muted); white-space: nowrap; font-size: 13px; }
+    .cell-action { text-align: right; white-space: nowrap; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge::before {
+      content: '';
+      width: 7px; height: 7px; border-radius: 50%;
+      background: currentColor;
+      opacity: .9;
+    }
+    .badge.new      { background: var(--new-bg);      color: var(--new-fg); }
+    .badge.progress { background: var(--progress-bg); color: var(--progress-fg); }
+    .badge.closed   { background: var(--closed-bg);   color: var(--closed-fg); }
+
+    .done-text { color: var(--muted); font-size: 13px; }
+
+    /* ---------- Пустое состояние ---------- */
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty .emoji { font-size: 34px; display: block; margin-bottom: 10px; }
+    .empty .title { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+
+    /* ---------- Скелетон ---------- */
+    .skeleton-row td { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .sk {
+      height: 14px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #eef2f7 25%, #e2e8f0 50%, #eef2f7 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ---------- Toast ---------- */
+    .toasts {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 50;
+      max-width: calc(100vw - 36px);
+    }
+    .toast {
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(15,23,42,.25);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      animation: toast-in .2s ease;
+    }
+    .toast.success { background: #065f46; }
+    .toast.error   { background: #991b1b; }
+    .toast .ic { font-size: 15px; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- Адаптив: таблица → карточки ---------- */
+    @media (max-width: 640px) {
+      .wrap { padding: 20px 14px 56px; }
+      .counters { gap: 10px; }
+      .counter { padding: 13px 14px; }
+      .counter .num { font-size: 24px; }
+      .counter .lbl { font-size: 12px; }
+
+      .form-grid { grid-template-columns: 1fr; }
+      .field.submit-field label { display: none; }
+      .btn.full { width: 100%; }
+
+      thead { display: none; }
+      table, tbody, tr, td { display: block; width: 100%; }
+      tbody tr {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin: 12px 0;
+        padding: 6px 4px;
+        background: #fff;
+      }
+      tbody tr:hover { background: #fff; }
+      tbody td {
+        border: none;
+        padding: 8px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+      }
+      tbody td::before {
+        content: attr(data-label);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .03em;
+      }
+      .cell-action { justify-content: flex-end; }
+      .cell-action::before { content: ''; }
+      .cell-action .btn { width: 100%; }
+    }
+
+    @media (max-width: 380px) {
+      .counters { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <header class="app-head">
+      <h1>Клиенты юриста</h1>
+      <p>мини-CRM: клиенты, статусы, дедлайны под контролем</p>
+    </header>
+
+    <!-- Счётчики / фильтры -->
+    <section class="counters" aria-label="Счётчики по статусам">
+      <button class="counter" type="button" data-filter="new" aria-pressed="false">
+        <div class="num" id="count-new">—</div>
+        <div class="lbl"><span class="dot new"></span> Новые</div>
+      </button>
+      <button class="counter" type="button" data-filter="in_progress" aria-pressed="false">
+        <div class="num" id="count-in_progress">—</div>
+        <div class="lbl"><span class="dot progress"></span> В работе</div>
+      </button>
+      <button class="counter" type="button" data-filter="closed" aria-pressed="false">
+        <div class="num" id="count-closed">—</div>
+        <div class="lbl"><span class="dot closed"></span> Закрыты</div>
+      </button>
+    </section>
+
+    <!-- Форма добавления -->
+    <section class="card">
+      <div class="card-head">Новый клиент</div>
+      <div class="card-body">
+        <form id="add-form" novalidate>
+          <div class="form-grid">
+            <div class="field" id="field-name">
+              <label for="in-name">Имя <span class="req">*</span></label>
+              <input id="in-name" name="name" type="text" autocomplete="off" placeholder="Иван Петров" />
+              <span class="err" id="err-name"></span>
+            </div>
+            <div class="field" id="field-phone">
+              <label for="in-phone">Телефон <span class="req">*</span></label>
+              <input id="in-phone" name="phone" type="tel" autocomplete="off" placeholder="+7 900 123-45-67" />
+              <span class="err" id="err-phone"></span>
+            </div>
+            <div class="field" id="field-status">
+              <label for="in-status">Статус</label>
+              <select id="in-status" name="status">
+                <option value="new" selected>Новый</option>
+                <option value="in_progress">В работе</option>
+                <option value="closed">Закрыт</option>
+              </select>
+              <span class="err"></span>
+            </div>
+            <div class="field submit-field">
+              <label>&nbsp;</label>
+              <button class="btn full" type="submit" id="submit-btn">
+                <span class="spinner"></span><span class="btn-label">Добавить клиента</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Таблица -->
+    <section class="card">
+      <div class="card-head">
+        <span>Клиенты</span>
+        <span class="muted" id="filter-hint"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Имя</th>
+              <th>Телефон</th>
+              <th>Статус</th>
+              <th>Дата добавления</th>
+              <th style="text-align:right">Действие</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    'use strict';
+
+    // ---- Конфигурация (публичные значения — anon-ключ безопасно держать в клиенте) ----
+    const SUPABASE_URL = 'https://vxxxsmuwdkbacjdxtnzo.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_zIlWNBbaIsE3dYQelX3Ysw_aQPVHbyU';
+    const NOTIFY_ENDPOINT = '/.netlify/functions/notify';
+
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ---- Модель статусов ----
+    const STATUS = {
+      new:         { label: 'Новый',   badge: 'new',      next: 'in_progress', action: 'Взять в работу' },
+      in_progress: { label: 'В работе', badge: 'progress', next: 'closed',      action: 'Закрыть дело' },
+      closed:      { label: 'Закрыт',  badge: 'closed',   next: null,          action: null },
+    };
+    const FILTER_LABEL = { new: 'Новые', in_progress: 'В работе', closed: 'Закрыты' };
+
+    // ---- Состояние ----
+    let clients = [];
+    let activeFilter = null;
+    let loading = true;
+
+    // ---- DOM ----
+    const tbody = document.getElementById('tbody');
+    const form = document.getElementById('add-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const nameInput = document.getElementById('in-name');
+    const phoneInput = document.getElementById('in-phone');
+    const statusSelect = document.getElementById('in-status');
+    const filterHint = document.getElementById('filter-hint');
+
+    // ================= Утилиты =================
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      if (isNaN(d)) return '—';
+      return d.toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+
+    function isValidPhone(v) {
+      if (!/^[\d\s()+\-]+$/.test(v)) return false;   // только допустимые символы
+      const digits = (v.match(/\d/g) || []).length;
+      return digits >= 7;                             // минимум 7 цифр
+    }
+
+    function toast(message, type) {
+      const box = document.getElementById('toasts');
+      const el = document.createElement('div');
+      el.className = 'toast' + (type ? ' ' + type : '');
+      const icon = type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ℹ';
+      el.innerHTML = '<span class="ic">' + icon + '</span><span></span>';
+      el.lastChild.textContent = message;
+      box.appendChild(el);
+      setTimeout(function () {
+        el.style.transition = 'opacity .25s, transform .25s';
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(8px)';
+        setTimeout(function () { el.remove(); }, 260);
+      }, 3200);
+    }
+
+    // ================= Валидация формы =================
+    function setFieldError(field, msg) {
+      const wrap = document.getElementById('field-' + field);
+      const err = document.getElementById('err-' + field);
+      if (msg) {
+        wrap.classList.add('invalid');
+        err.textContent = msg;
+      } else {
+        wrap.classList.remove('invalid');
+        err.textContent = '';
+      }
+    }
+    function clearErrors() {
+      setFieldError('name', '');
+      setFieldError('phone', '');
+    }
+
+    // ================= Рендер =================
+    function counts() {
+      const c = { new: 0, in_progress: 0, closed: 0 };
+      for (const cl of clients) if (c[cl.status] != null) c[cl.status]++;
+      return c;
+    }
+
+    function renderCounters() {
+      const c = counts();
+      document.getElementById('count-new').textContent = loading ? '—' : c.new;
+      document.getElementById('count-in_progress').textContent = loading ? '—' : c.in_progress;
+      document.getElementById('count-closed').textContent = loading ? '—' : c.closed;
+
+      document.querySelectorAll('.counter').forEach(function (btn) {
+        const active = btn.dataset.filter === activeFilter;
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+
+      filterHint.textContent = activeFilter
+        ? 'Фильтр: ' + FILTER_LABEL[activeFilter] + ' · нажмите счётчик ещё раз, чтобы снять'
+        : '';
+    }
+
+    function skeletonRows() {
+      let html = '';
+      for (let i = 0; i < 3; i++) {
+        html +=
+          '<tr class="skeleton-row">' +
+          '<td><div class="sk" style="width:60%"></div></td>' +
+          '<td><div class="sk" style="width:70%"></div></td>' +
+          '<td><div class="sk" style="width:80px"></div></td>' +
+          '<td><div class="sk" style="width:70%"></div></td>' +
+          '<td><div class="sk" style="width:110px;margin-left:auto"></div></td>' +
+          '</tr>';
+      }
+      return html;
+    }
+
+    function emptyRow(message) {
+      return (
+        '<tr><td colspan="5">' +
+        '<div class="empty">' +
+        '<span class="emoji">📇</span>' +
+        '<div class="title">' + escapeHtml(message.title) + '</div>' +
+        '<div>' + escapeHtml(message.sub) + '</div>' +
+        '</div></td></tr>'
+      );
+    }
+
+    function renderTable() {
+      if (loading) {
+        tbody.innerHTML = skeletonRows();
+        return;
+      }
+
+      const rows = activeFilter
+        ? clients.filter(function (c) { return c.status === activeFilter; })
+        : clients;
+
+      if (rows.length === 0) {
+        if (clients.length === 0) {
+          tbody.innerHTML = emptyRow({
+            title: 'Пока пусто — добавьте первого клиента',
+            sub: 'Заполните форму выше, и клиент появится здесь.',
+          });
+        } else {
+          tbody.innerHTML = emptyRow({
+            title: 'Нет клиентов в этом статусе',
+            sub: 'Снимите фильтр, нажав активный счётчик ещё раз.',
+          });
+        }
+        return;
+      }
+
+      let html = '';
+      for (const c of rows) {
+        const st = STATUS[c.status] || { label: c.status, badge: 'new', next: null, action: null };
+        const actionCell = st.next
+          ? '<button class="btn btn-sm btn-ghost" data-advance="' + escapeHtml(c.id) + '">' +
+              escapeHtml(st.action) + '</button>'
+          : '<span class="done-text">Завершено</span>';
+
+        html +=
+          '<tr>' +
+          '<td class="cell-name" data-label="Имя">' + escapeHtml(c.name) + '</td>' +
+          '<td class="cell-phone" data-label="Телефон">' + escapeHtml(c.phone) + '</td>' +
+          '<td data-label="Статус"><span class="badge ' + st.badge + '">' + escapeHtml(st.label) + '</span></td>' +
+          '<td class="cell-date" data-label="Добавлен">' + escapeHtml(formatDate(c.created_at)) + '</td>' +
+          '<td class="cell-action" data-label="Действие">' + actionCell + '</td>' +
+          '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    function render() {
+      renderCounters();
+      renderTable();
+    }
+
+    // ================= Данные =================
+    async function loadClients() {
+      loading = true;
+      render();
+      const { data, error } = await db
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      loading = false;
+      if (error) {
+        console.error('Supabase load error:', error);
+        clients = [];
+        render();
+        tbody.innerHTML = emptyRow({
+          title: 'Не удалось загрузить клиентов',
+          sub: 'Проверьте подключение и обновите страницу.',
+        });
+        toast('Не удалось загрузить данные', 'error');
+        return;
+      }
+      clients = data || [];
+      render();
+    }
+
+    function setSubmitting(on) {
+      submitBtn.disabled = on;
+      submitBtn.classList.toggle('loading', on);
+      submitBtn.querySelector('.btn-label').textContent = on ? 'Сохраняем…' : 'Добавить клиента';
+    }
+
+    async function onSubmit(e) {
+      e.preventDefault();
+      clearErrors();
+
+      const name = nameInput.value.trim();
+      const phone = phoneInput.value.trim();
+      const status = statusSelect.value;
+
+      let ok = true;
+      if (!name) { setFieldError('name', 'Введите имя'); ok = false; }
+      if (!phone) {
+        setFieldError('phone', 'Введите телефон'); ok = false;
+      } else if (!isValidPhone(phone)) {
+        setFieldError('phone', 'Проверьте номер: цифры, +, ( ), -, минимум 7 цифр'); ok = false;
+      }
+      if (!ok) return;
+
+      setSubmitting(true);
+      const { data, error } = await db
+        .from('clients')
+        .insert({ name: name, phone: phone, status: status })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        toast('Не удалось сохранить, попробуйте ещё раз', 'error');
+        setSubmitting(false);
+        return;
+      }
+
+      clients.unshift(data);
+      render();
+      form.reset();
+      statusSelect.value = 'new';
+      clearErrors();
+      setSubmitting(false);
+      nameInput.focus();
+      toast('Клиент добавлен', 'success');
+
+      // Уведомление — best effort, не блокирует и не ломает добавление.
+      notify(data);
+    }
+
+    async function advanceStatus(id) {
+      const idx = clients.findIndex(function (c) { return c.id === id; });
+      if (idx === -1) return;
+      const current = clients[idx];
+      const next = (STATUS[current.status] || {}).next;
+      if (!next) return;
+
+      const prevStatus = current.status;
+
+      // Оптимистичное обновление.
+      clients[idx] = Object.assign({}, current, { status: next });
+      render();
+
+      const { error } = await db.from('clients').update({ status: next }).eq('id', id);
+      if (error) {
+        console.error('Supabase update error:', error);
+        // Откат.
+        const j = clients.findIndex(function (c) { return c.id === id; });
+        if (j !== -1) clients[j] = Object.assign({}, clients[j], { status: prevStatus });
+        render();
+        toast('Не удалось изменить статус', 'error');
+      }
+    }
+
+    function notify(client) {
+      // fire-and-forget: любые ошибки только логируем.
+      fetch(NOTIFY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: client.name, phone: client.phone, status: client.status }),
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (res) {
+          if (res && res.skipped) console.info('Telegram: env не задан, уведомление пропущено.');
+        })
+        .catch(function (err) { console.error('Notify failed (не критично):', err); });
+    }
+
+    // ================= События =================
+    form.addEventListener('submit', onSubmit);
+
+    // Живая очистка ошибки при вводе.
+    nameInput.addEventListener('input', function () { setFieldError('name', ''); });
+    phoneInput.addEventListener('input', function () { setFieldError('phone', ''); });
+
+    // Клик по счётчику = фильтр / снятие фильтра.
+    document.querySelectorAll('.counter').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const f = btn.dataset.filter;
+        activeFilter = activeFilter === f ? null : f;
+        render();
+      });
+    });
+
+    // Делегирование кликов по кнопкам смены статуса.
+    tbody.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-advance]');
+      if (!btn) return;
+      advanceStatus(btn.getAttribute('data-advance'));
+    });
+
+    // ================= Старт =================
+    loadClients();
+  </script>
+</body>
+</html>
