@@ -11,6 +11,9 @@ node_modules/
 # Claude Code local settings
 .claude/
 
+# Референс-материалы (видео для изучения, не для деплоя)
+ig_ref/
+
 # OS
 .DS_Store
 Thumbs.db

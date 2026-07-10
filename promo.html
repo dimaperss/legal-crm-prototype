@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Клиенты юриста · промо</title>
+<style>
+  :root{
+    --bg:#05060c;
+    --text:#eef1ff; --muted:rgba(238,241,255,.72);
+    --accent:#6b8afd; --accent2:#2dd4bf; --accent3:#ff4d8d;
+    --edge:rgba(255,255,255,.09);
+    --nav:72px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(1100px 760px at 78% 12%, #17204a 0%, transparent 55%),
+      radial-gradient(900px 700px at 0% 100%, #0c2b2a 0%, transparent 50%),
+      var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* film grain */
+  .grain{
+    position:fixed; inset:0; z-index:6; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  nav{
+    position:relative; z-index:3;
+    display:flex; align-items:center; justify-content:space-between;
+    height:var(--nav); padding:0 clamp(18px,5vw,64px);
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.02em}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--accent2);box-shadow:0 0 14px var(--accent2)}
+  nav .links{display:flex; gap:26px; color:var(--muted); font-size:14px}
+  nav .links a{color:inherit; text-decoration:none}
+  nav .links a:hover{color:var(--text)}
+  @media(max-width:680px){nav .links{display:none}}
+
+  /* ---- HERO: two columns, text and 3D never overlap ---- */
+  .hero{
+    position:relative; z-index:2;
+    max-width:1200px; margin:0 auto;
+    min-height:calc(100dvh - var(--nav));
+    padding:8px clamp(18px,5vw,64px) 40px;
+    display:grid; grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);
+    align-items:center; gap:clamp(20px,4vw,56px);
+  }
+  .hero__text{max-width:620px}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:7px 13px; border:1px solid var(--edge); border-radius:100px;
+    font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    background:rgba(255,255,255,.02); backdrop-filter:blur(6px);
+  }
+  h1{
+    font-size:clamp(38px,6vw,76px); line-height:1.03; margin:22px 0 0;
+    letter-spacing:-.02em; font-weight:800;
+  }
+  h1 .accent{
+    background:linear-gradient(100deg,var(--accent),var(--accent2) 60%,#fff);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sub{margin:22px 0 0; font-size:clamp(16px,1.4vw,19px); line-height:1.6; color:var(--muted); max-width:52ch}
+  .cta{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap}
+  .btn{
+    padding:14px 24px; border-radius:14px; font-size:15px; font-weight:600; cursor:pointer;
+    border:1px solid var(--edge); color:var(--text); background:rgba(255,255,255,.04);
+    text-decoration:none; transition:transform .2s, box-shadow .2s, background .2s;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn.primary{
+    border:none;
+    background:linear-gradient(100deg,var(--accent),var(--accent2));
+    color:#05060c; box-shadow:0 10px 40px rgba(107,138,253,.35);
+  }
+  .btn.primary:hover{box-shadow:0 14px 50px rgba(45,212,191,.45)}
+  a:focus-visible, .btn:focus-visible{ outline:2px solid var(--accent2); outline-offset:3px; border-radius:10px; }
+
+  /* 3D column — canvas is confined to this box, so it can never cover text */
+  .hero__visual{
+    position:relative; width:100%; height:min(72dvh,600px);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .glow{
+    position:absolute; inset:8% ; z-index:0; border-radius:50%;
+    background:radial-gradient(circle at 50% 46%, rgba(107,138,253,.42), rgba(45,212,191,.16) 42%, transparent 70%);
+    filter:blur(34px); pointer-events:none; animation:breathe 7s ease-in-out infinite;
+  }
+  @keyframes breathe{50%{transform:scale(1.1); opacity:.85}}
+  #scene{
+    position:relative; z-index:1; width:100%; height:100%; display:block;
+    cursor:grab; touch-action:none; -webkit-user-select:none; user-select:none;
+    -webkit-tap-highlight-color:transparent; outline:none;
+  }
+  #scene.grabbing{cursor:grabbing}
+  .drag-hint{
+    position:absolute; z-index:2; bottom:6px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; gap:7px; white-space:nowrap;
+    padding:7px 14px; border-radius:100px; border:1px solid var(--edge);
+    background:rgba(10,14,31,.5); backdrop-filter:blur(6px);
+    color:var(--muted); font-size:12.5px; letter-spacing:.04em;
+    transition:opacity .5s; pointer-events:none;
+  }
+  .drag-hint.hide{opacity:0}
+  .drag-hint svg{width:15px;height:15px;opacity:.85}
+
+  .scroll-hint{
+    position:absolute; left:50%; bottom:16px; transform:translateX(-50%); z-index:2;
+    color:var(--muted); font-size:12px; letter-spacing:.12em; text-transform:uppercase;
+    display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;
+  }
+  .scroll-hint .line{width:1px;height:30px;background:linear-gradient(var(--muted),transparent); animation:drop 1.8s ease-in-out infinite}
+  @keyframes drop{0%,100%{transform:scaleY(.4);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+
+  /* ---- second screen: reveal on scroll ---- */
+  .panel{position:relative; z-index:2; padding:12vh clamp(18px,5vw,64px) 16vh; max-width:1100px; margin:0 auto}
+  .panel h2{font-size:clamp(26px,4vw,42px); letter-spacing:-.01em; margin:0 0 14px}
+  .panel p.lead{color:var(--muted); font-size:17px; max-width:60ch; margin:0 0 48px}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px}
+  .card{
+    padding:26px; border-radius:18px; border:1px solid var(--edge);
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+    backdrop-filter:blur(8px);
+    opacity:0; transform:translateY(30px); transition:opacity .8s, transform .8s;
+  }
+  .card.in{opacity:1; transform:none}
+  .card .num{font-size:34px; font-weight:800;
+    background:linear-gradient(100deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .card h3{margin:14px 0 6px; font-size:18px}
+  .card p{margin:0; color:var(--muted); font-size:14.5px; line-height:1.55}
+
+  /* load-in reveal */
+  .reveal{opacity:0; animation:rise .95s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{from{opacity:0; transform:translateY(26px)} to{opacity:1; transform:none}}
+
+  /* ---- MOBILE: stack; 3D on top in its own box, text below → zero overlap ---- */
+  @media(max-width:900px){
+    .hero{
+      grid-template-columns:1fr; gap:8px;
+      min-height:auto; padding-top:4px;
+    }
+    .hero__visual{order:-1; height:42dvh; min-height:280px; margin-bottom:6px}
+    .hero__text{max-width:none}
+    h1{font-size:clamp(34px,9vw,52px)}
+    .scroll-hint{display:none}
+  }
+
+  /* respect reduced motion */
+  @media(prefers-reduced-motion:reduce){
+    .reveal{animation:none; opacity:1}
+    .glow,.scroll-hint .line{animation:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+<noscript><style>.card{opacity:1;transform:none}</style></noscript>
+</head>
+<body>
+  <div class="grain"></div>
+
+  <nav class="reveal" style="animation-delay:.05s">
+    <div class="brand"><span class="dot"></span> Клиенты юриста</div>
+    <div class="links"><a href="#how">Возможности</a><a href="#how">Тарифы</a><a href="#how">Демо</a><a href="index.html">Вход</a></div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero__text">
+      <span class="eyebrow reveal" style="animation-delay:.15s">CRM · мини-система для юриста</span>
+      <h1 class="reveal" style="animation-delay:.28s">Дела под<br><span class="accent">полным контролем</span></h1>
+      <p class="sub reveal" style="animation-delay:.42s">
+        Дашборд, статусы клиентов и уведомления в Telegram — в одном месте.
+        А эта страница показывает, как «дорого» может выглядеть вход в систему.
+      </p>
+      <div class="cta reveal" style="animation-delay:.56s">
+        <a class="btn primary" href="index.html">Открыть CRM</a>
+        <a class="btn" href="#how">Как это сделано</a>
+      </div>
+    </div>
+
+    <div class="hero__visual reveal" style="animation-delay:.5s">
+      <div class="glow"></div>
+      <canvas id="scene" aria-label="Интерактивный 3D-объект: тащите, чтобы вращать" role="img"></canvas>
+      <div class="drag-hint" id="dragHint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="3.5"/></svg>
+        Зажми и тащи, чтобы вращать
+      </div>
+      <div class="scroll-hint"><span>Скролль</span><span class="line"></span></div>
+    </div>
+  </header>
+
+  <section class="panel" id="how">
+    <h2>Один эффект — и страница уже «звучит»</h2>
+    <p class="lead">3D-объект можно крутить мышью или пальцем, он вращается по инерции и мягко замедляется. Ниже — тот самый reveal-эффект появления блоков при скролле.</p>
+    <div class="cards">
+      <div class="card"><div class="num">3D</div><h3>Живой объект</h3><p>WebGL-рендер с отражениями окружения. Тот же движок, что под капотом у Spline.</p></div>
+      <div class="card"><div class="num">360°</div><h3>Вращение в руках</h3><p>Тащи мышкой на ПК или пальцем на телефоне. Инерция и плавное затухание.</p></div>
+      <div class="card"><div class="num">0</div><h3>Наложений на текст</h3><p>3D живёт в своей колонке и никогда не перекрывает контент — на любом экране.</p></div>
+      <div class="card"><div class="num">1</div><h3>Строка до Spline</h3><p>Свою 3D-сцену из Spline подключишь в одну строку — см. комментарий внизу файла.</p></div>
+    </div>
+  </section>
+
+  <!-- =====================================================================
+       ВАРИАНТ SPLINE — свой 3D-объект без кода.
+
+         1) Зайди на https://spline.design (бесплатный аккаунт).
+         2) Community -> выбери сцену -> Duplicate  (или собери свой объект).
+         3) Export -> Viewer / Public.
+            Скопируй ссылку вида: https://prod.spline.design/XXXXXXXX/scene.splinecode
+         4) Вставь <spline-viewer> ВНУТРЬ .hero__visual вместо <canvas id="scene">
+            и раскомментируй строку со скриптом ниже. Стиль: width:100%;height:100%.
+
+       <script type="module" src="https://unpkg.com/@splinetool/viewer/build/spline-viewer.js"></script>
+       <spline-viewer style="width:100%;height:100%" url="ВСТАВЬ_СВОЙ_URL/scene.splinecode"></spline-viewer>
+  ====================================================================== -->
+
+  <script>
+    /* Safety net: if the 3D module never boots (e.g. CDN blocked), reveal the cards
+       so page content is never stuck invisible behind the scroll-reveal. */
+    addEventListener('load', () => setTimeout(() => {
+      if(!window.__demoReady) document.querySelectorAll('.card').forEach(c => c.classList.add('in'));
+    }, 2500));
+  </script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const canvas = document.getElementById('scene');
+    const stage  = canvas.parentElement;          // .hero__visual — sizing reference
+    const hint   = document.getElementById('dragHint');
+    const isTouch = matchMedia('(pointer:coarse)').matches;
+    const reduce  = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, powerPreference:'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    const R = 1.2, FIT_MARGIN = 1.35, HALF_FOV = (45 * Math.PI / 180) / 2;
+    camera.position.set(0, 0, 5);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const room  = new RoomEnvironment();
+    scene.environment = pmrem.fromScene(room, 0.04).texture;
+    pmrem.dispose();                                            // free the PMREM render target
+    room.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
+
+    const gem = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(1.2, 1),
+      new THREE.MeshPhysicalMaterial({
+        color:0x9fb2ff, metalness:0.9, roughness:0.18, flatShading:true,
+        iridescence:1, iridescenceIOR:1.3, clearcoat:1, clearcoatRoughness:0.25,
+        envMapIntensity:1.6
+      })
+    );
+    scene.add(gem);
+
+    const l1 = new THREE.PointLight(0x6b8afd, 60, 40); l1.position.set(4,5,4);  scene.add(l1);
+    const l2 = new THREE.PointLight(0x2dd4bf, 45, 40); l2.position.set(-5,-2,3); scene.add(l2);
+    const l3 = new THREE.PointLight(0xff4d8d, 28, 40); l3.position.set(0,-4,-3); scene.add(l3);
+
+    /* ---------- size to the container (never the whole window) ---------- */
+    function resize(){
+      const w = stage.clientWidth, h = stage.clientHeight;
+      if(!w || !h) return;
+      renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      // dolly the camera so the object always fits (no clipping) at any aspect
+      const dV = (R * FIT_MARGIN) / Math.tan(HALF_FOV);
+      const dH = (R * FIT_MARGIN) / (Math.tan(HALF_FOV) * camera.aspect);
+      camera.position.z = Math.max(dV, dH);
+      camera.updateProjectionMatrix();
+    }
+    if(window.ResizeObserver){ new ResizeObserver(resize).observe(stage); }
+    else { addEventListener('resize', resize); }
+    resize();
+
+    /* ---------- drag to rotate (mouse + touch), with inertia ---------- */
+    const rot = { x:0.25, y:0.5 };   // target rotation
+    const vel = { x:0, y:0 };        // angular velocity (for inertia)
+    let dragging = false, lastX = 0, lastY = 0, moved = false, activeId = null;
+    const SENS = 0.007, DAMP = 0.93, IDLE = 0.0024, MAXP = 1.2;
+
+    function down(e){
+      if(dragging) return;                       // track one pointer/finger; ignore extras
+      dragging = true; moved = false; activeId = e.pointerId;
+      lastX = e.clientX; lastY = e.clientY;
+      vel.x = vel.y = 0;
+      canvas.classList.add('grabbing');
+      try{ canvas.setPointerCapture(e.pointerId); }catch(_){}
+    }
+    function move(e){
+      if(!dragging || e.pointerId !== activeId) return;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      if(Math.abs(dx) + Math.abs(dy) > 2){ moved = true; hint.classList.add('hide'); }
+      rot.y += dx * SENS;
+      rot.x = Math.max(-MAXP, Math.min(MAXP, rot.x + dy * SENS));   // clamp pitch at input
+      vel.y = dx * SENS;
+      vel.x = dy * SENS;
+    }
+    function up(e){
+      if(!dragging || e.pointerId !== activeId) return;
+      dragging = false; activeId = null;
+      canvas.classList.remove('grabbing');
+      try{ canvas.releasePointerCapture(e.pointerId); }catch(_){}
+    }
+    canvas.addEventListener('pointerdown', down);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('pointercancel', up);
+    canvas.addEventListener('lostpointercapture', up);   // never leave drag stuck if capture is stolen
+    // auto-hide the hint after a few seconds even without interaction
+    setTimeout(()=>hint.classList.add('hide'), 5000);
+
+    /* ---------- render loop (frame-rate independent) ---------- */
+    const clock = new THREE.Clock();
+    let prev = performance.now();
+    function step(now){
+      now = now ?? performance.now();
+      let dt = (now - prev) / 1000; prev = now;
+      dt = Math.max(0, Math.min(dt, 0.05));                      // clamp hitches / background-tab gaps
+      const f = dt * 60;                                        // 1.0 at 60fps; scales to any refresh rate
+      const t = clock.getElapsedTime();
+
+      if(!dragging){
+        rot.x += vel.x * f; rot.y += vel.y * f;
+        const d = Math.pow(DAMP, f);
+        vel.x *= d; vel.y *= d;
+        if(!reduce && Math.abs(vel.x) < 1e-4 && Math.abs(vel.y) < 1e-4) rot.y += IDLE * f;  // idle spin once settled (no hand-off bump)
+      }
+      rot.x = Math.max(-MAXP, Math.min(MAXP, rot.x));            // clamp pitch, no flip
+
+      const lf = 1 - Math.pow(1 - 0.18, f);                     // fps-independent smoothing factor
+      gem.rotation.x += (rot.x - gem.rotation.x) * lf;
+      gem.rotation.y += (rot.y - gem.rotation.y) * lf;
+      if(!reduce) gem.position.y = Math.sin(t * 0.9) * 0.04;    // subtle float (disabled for reduced motion)
+
+      renderer.render(scene, camera);
+    }
+    function frame(now){ requestAnimationFrame(frame); step(now); }
+    requestAnimationFrame(frame);
+
+    /* ---------- reveal-on-scroll for cards ---------- */
+    const cards = [...document.querySelectorAll('.card')];
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach((en)=>{
+        if(en.isIntersecting){
+          en.target.style.transitionDelay = (cards.indexOf(en.target) * 0.08) + 's';
+          en.target.classList.add('in');
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold:0.2 });
+    cards.forEach(c => io.observe(c));
+
+    /* ---------- test hooks (harmless) ---------- */
+    window.__demoReady = true;
+    window.__getRot = () => ({ x:+gem.rotation.x.toFixed(4), y:+gem.rotation.y.toFixed(4) });
+    window.__getTarget = () => ({ x:+rot.x.toFixed(4), y:+rot.y.toFixed(4) });
+    window.__tick = (n=1) => { for(let i=0;i<n;i++){ prev = performance.now() - 16.667; step(); } return window.__getRot(); };
+  </script>
+</body>
+</html>
